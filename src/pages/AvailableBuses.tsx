@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, MapPin } from "lucide-react";
 import BusIcon from "@/components/BusIcon";
-import { findRoutes, getRouteSegment } from "@/data/busData";
+import { findRoutes, getRouteSegment, getArrivalTime } from "@/data/busData";
 
 const AvailableBuses = () => {
   const navigate = useNavigate();
@@ -11,7 +11,17 @@ const AvailableBuses = () => {
   const from = params.get("from") || "";
   const to = params.get("to") || "";
 
-  const routes = useMemo(() => findRoutes(from, to), [from, to]);
+  const routes = useMemo(() => {
+    const found = findRoutes(from, to);
+    // Attach stable arrival times and sort by them
+    const withArrival = found.map((route) => ({
+      route,
+      arrivalMin: getArrivalTime(route.id),
+      segment: getRouteSegment(route, from, to),
+    }));
+    withArrival.sort((a, b) => a.arrivalMin - b.arrivalMin);
+    return withArrival;
+  }, [from, to]);
 
   return (
     <motion.div
@@ -48,55 +58,50 @@ const AvailableBuses = () => {
             </p>
           </div>
         ) : (
-          routes.map((route, i) => {
-            const segment = getRouteSegment(route, from, to);
-            const arrivalMin = Math.round(Math.random() * 10 + 2); // simulated
+          routes.map(({ route, arrivalMin, segment }, i) => (
+            <motion.button
+              key={route.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08, duration: 0.3 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() =>
+                navigate(
+                  `/track?routeId=${route.id}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&arrival=${arrivalMin}`
+                )
+              }
+              className="flex w-full items-center gap-4 rounded-2xl bg-card p-4 text-left shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-elevated)]"
+            >
+              {/* Bus Number */}
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-accent">
+                <span className="text-xl font-bold text-primary">{route.busNumber}</span>
+              </div>
 
-            return (
-              <motion.button
-                key={route.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08, duration: 0.3 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() =>
-                  navigate(
-                    `/track?routeId=${route.id}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&arrival=${arrivalMin}`
-                  )
-                }
-                className="flex w-full items-center gap-4 rounded-2xl bg-card p-4 text-left shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-elevated)]"
-              >
-                {/* Bus Number */}
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-accent">
-                  <span className="text-xl font-bold text-primary">{route.busNumber}</span>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-primary text-sm">
+                    Arriving in {arrivalMin} min
+                  </span>
                 </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-primary text-sm">
-                      Arriving in {arrivalMin} min
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                    {route.from} → {route.to}
-                  </p>
-                  <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {segment.travelTime} min travel
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {segment.userStops.length} stops
-                    </span>
-                  </div>
+                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                  {route.from} → {route.to}
+                </p>
+                <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {segment.travelTime} min travel
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {segment.userStops.length} stops
+                  </span>
                 </div>
+              </div>
 
-                <BusIcon className="h-6 w-6 shrink-0 text-primary/30" />
-              </motion.button>
-            );
-          })
+              <BusIcon className="h-6 w-6 shrink-0 text-primary/30" />
+            </motion.button>
+          ))
         )}
       </div>
     </motion.div>
