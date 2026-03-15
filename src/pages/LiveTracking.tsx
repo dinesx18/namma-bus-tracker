@@ -6,29 +6,19 @@ import { Button } from "@/components/ui/button";
 import BusIcon from "@/components/BusIcon";
 import LiveRouteMap from "@/components/tracking/LiveRouteMap";
 import { busRoutes, getRouteSegment } from "@/data/busData";
+import type { BusRoute, RouteSegment } from "@/data/busData";
 import { useBusTracking } from "@/hooks/useBusTracking";
 
-const LiveTracking = () => {
+interface LiveTrackingContentProps {
+  route: BusRoute;
+  segment: RouteSegment;
+  from: string;
+  to: string;
+  arrivalMin: number;
+}
+
+const LiveTrackingContent = ({ route, segment, from, to, arrivalMin }: LiveTrackingContentProps) => {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-
-  const routeId = params.get("routeId") || "";
-  const from = params.get("from") || "";
-  const to = params.get("to") || "";
-  const arrivalMin = Number.parseInt(params.get("arrival") || "5", 10);
-
-  const route = useMemo(() => busRoutes.find((item) => item.id === routeId), [routeId]);
-  const segment = useMemo(() => (route ? getRouteSegment(route, from, to) : null), [route, from, to]);
-
-  if (!route || !segment) {
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-6">
-        <p className="text-center text-sm text-muted-foreground">
-          Invalid tracking link. Please go back and select your route again.
-        </p>
-      </div>
-    );
-  }
 
   const { trackingState, busPosition, currentStopIdx, eta, hasStarted, startTracking } = useBusTracking({
     route,
@@ -127,11 +117,7 @@ const LiveTracking = () => {
         </AnimatePresence>
 
         {trackingState === "idle" ? (
-          <Button
-            onClick={startTracking}
-            className="mt-6 h-14 w-full rounded-2xl text-base font-semibold"
-            aria-label="Track Bus"
-          >
+          <Button onClick={startTracking} className="mt-6 h-14 w-full rounded-2xl text-base font-semibold" aria-label="Track Bus">
             <Navigation className="h-5 w-5" />
             Track Bus
           </Button>
@@ -157,6 +143,30 @@ const LiveTracking = () => {
       </div>
     </motion.div>
   );
+};
+
+const LiveTracking = () => {
+  const [params] = useSearchParams();
+
+  const routeId = params.get("routeId") || "";
+  const from = params.get("from") || "";
+  const to = params.get("to") || "";
+  const arrivalMin = Number.parseInt(params.get("arrival") || "5", 10);
+
+  const route = useMemo(() => busRoutes.find((item) => item.id === routeId), [routeId]);
+  const segment = useMemo(() => (route ? getRouteSegment(route, from, to) : null), [route, from, to]);
+
+  if (!route || !segment) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-6">
+        <p className="text-center text-sm text-muted-foreground">
+          Invalid tracking link. Please go back and select your route again.
+        </p>
+      </div>
+    );
+  }
+
+  return <LiveTrackingContent route={route} segment={segment} from={from} to={to} arrivalMin={arrivalMin} />;
 };
 
 export default LiveTracking;
