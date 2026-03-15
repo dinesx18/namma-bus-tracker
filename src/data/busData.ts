@@ -346,39 +346,121 @@ export const busRoutes: BusRoute[] = [
     stops: [s("Vandalur"), s("Perungalathur"), s("Tambaram"), s("Chromepet"), s("Pallavaram"), s("Alandur"), s("Guindy"), s("Saidapet"), s("T. Nagar"), s("Egmore"), s("Central Station"), s("Broadway")],
     totalTime: 95, frequency: 15,
   },
+  // Route 31: 19B – Adyar to Broadway
+  {
+    id: "r31", busNumber: "19B",
+    from: "Adyar", to: "Broadway",
+    stops: [s("Adyar"), s("Mandaveli"), s("Mylapore"), s("Triplicane"), s("Chepauk"), s("Central Station"), s("Broadway")],
+    totalTime: 52, frequency: 8,
+  },
+  // Route 32: 102 – Avadi to Tambaram
+  {
+    id: "r32", busNumber: "102",
+    from: "Avadi", to: "Tambaram",
+    stops: [s("Avadi"), s("Ambattur"), s("Padi"), s("Koyambedu"), s("Vadapalani"), s("Ashok Nagar"), s("Guindy"), s("Alandur"), s("Pallavaram"), s("Chromepet"), s("Tambaram")],
+    totalTime: 92, frequency: 12,
+  },
+  // Route 33: 52A – Puzhal to T. Nagar
+  {
+    id: "r33", busNumber: "52A",
+    from: "Puzhal", to: "T. Nagar",
+    stops: [s("Puzhal"), s("Madhavaram"), s("Perambur"), s("Ayanavaram"), s("Kilpauk"), s("Chetpet"), s("Nungambakkam"), s("T. Nagar")],
+    totalTime: 58, frequency: 10,
+  },
+  // Route 34: D70 – Kelambakkam to Broadway
+  {
+    id: "r34", busNumber: "D70",
+    from: "Kelambakkam", to: "Broadway",
+    stops: [s("Kelambakkam"), s("Sholinganallur"), s("Thoraipakkam"), s("Perungudi"), s("Thiruvanmiyur"), s("Adyar"), s("Mylapore"), s("Triplicane"), s("Chepauk"), s("Broadway")],
+    totalTime: 98, frequency: 15,
+  },
+  // Route 35: E18 – Vandalur to Sholinganallur
+  {
+    id: "r35", busNumber: "E18",
+    from: "Vandalur", to: "Sholinganallur",
+    stops: [s("Vandalur"), s("Perungalathur"), s("Tambaram"), s("Medavakkam"), s("Sithalapakkam"), s("Sholinganallur")],
+    totalTime: 62, frequency: 15,
+  },
+  // Route 36: M88 – Porur to Thiruvanmiyur
+  {
+    id: "r36", busNumber: "M88",
+    from: "Porur", to: "Thiruvanmiyur",
+    stops: [s("Porur"), s("Valasaravakkam"), s("Virugambakkam"), s("Vadapalani"), s("Ashok Nagar"), s("Saidapet"), s("Guindy"), s("Adyar"), s("Thiruvanmiyur")],
+    totalTime: 70, frequency: 10,
+  },
+  // Route 37: 27D – Red Hills to Central Station
+  {
+    id: "r37", busNumber: "27D",
+    from: "Red Hills", to: "Central Station",
+    stops: [s("Red Hills"), s("Puzhal"), s("Madhavaram"), s("Perambur"), s("Ayanavaram"), s("Vepery"), s("Egmore"), s("Central Station")],
+    totalTime: 72, frequency: 12,
+  },
+  // Route 38: 6A – Besant Nagar to Tambaram
+  {
+    id: "r38", busNumber: "6A",
+    from: "Besant Nagar", to: "Tambaram",
+    stops: [s("Besant Nagar"), s("Adyar"), s("Guindy"), s("Alandur"), s("Nanganallur"), s("Madipakkam"), s("Medavakkam"), s("Tambaram")],
+    totalTime: 68, frequency: 10,
+  },
+  // Route 39: 41C – Poonamallee to T. Nagar
+  {
+    id: "r39", busNumber: "41C",
+    from: "Poonamallee", to: "T. Nagar",
+    stops: [s("Poonamallee"), s("Porur"), s("Maduravoyal"), s("Koyambedu"), s("Vadapalani"), s("Kodambakkam"), s("T. Nagar")],
+    totalTime: 65, frequency: 10,
+  },
+  // Route 40: M51 – Ennore to Sholinganallur
+  {
+    id: "r40", busNumber: "M51",
+    from: "Ennore", to: "Sholinganallur",
+    stops: [s("Ennore"), s("Tiruvottiyur"), s("Tondiarpet"), s("Washermanpet"), s("Central Station"), s("Egmore"), s("T. Nagar"), s("Saidapet"), s("Guindy"), s("Perungudi"), s("Sholinganallur")],
+    totalTime: 105, frequency: 15,
+  },
 ];
+
+export interface RouteSegment {
+  userStops: BusStop[];
+  beforeUser: BusStop[];
+  afterUser: BusStop[];
+  allStops: BusStop[];
+  etaToStart: number;
+  travelTime: number;
+  startIdx: number;
+  endIdx: number;
+}
 
 export function findRoutes(startStop: string, endStop: string): BusRoute[] {
   return busRoutes.filter((route) => {
-    const stopNames = route.stops.map((s) => s.name);
+    const stopNames = route.stops.map((stop) => stop.name);
     const startIdx = stopNames.indexOf(startStop);
     const endIdx = stopNames.indexOf(endStop);
     return startIdx !== -1 && endIdx !== -1 && startIdx < endIdx;
   });
 }
 
-export function getRouteSegment(route: BusRoute, startStop: string, endStop: string) {
-  const stopNames = route.stops.map((s) => s.name);
+export function getRouteSegment(route: BusRoute, startStop: string, endStop: string): RouteSegment | null {
+  const stopNames = route.stops.map((stop) => stop.name);
   const startIdx = stopNames.indexOf(startStop);
   const endIdx = stopNames.indexOf(endStop);
+
+  if (startIdx === -1 || endIdx === -1 || startIdx >= endIdx) {
+    return null;
+  }
 
   const userStops = route.stops.slice(startIdx, endIdx + 1);
   const beforeUser = route.stops.slice(0, startIdx + 1);
   const afterUser = route.stops.slice(endIdx);
 
-  const totalStops = route.stops.length - 1;
+  const totalStops = Math.max(route.stops.length - 1, 1);
   const timePerStop = route.totalTime / totalStops;
-
-  const etaToStart = Math.round(startIdx * timePerStop);
-  const travelTime = Math.round((endIdx - startIdx) * timePerStop);
 
   return {
     userStops,
     beforeUser,
     afterUser,
     allStops: route.stops,
-    etaToStart,
-    travelTime,
+    etaToStart: Math.round(startIdx * timePerStop),
+    travelTime: Math.round((endIdx - startIdx) * timePerStop),
     startIdx,
     endIdx,
   };
@@ -387,15 +469,20 @@ export function getRouteSegment(route: BusRoute, startStop: string, endStop: str
 // Deterministic pseudo-random based on route id for stable arrival times
 export function getArrivalTime(routeId: string): number {
   let hash = 0;
-  for (let i = 0; i < routeId.length; i++) {
+  for (let i = 0; i < routeId.length; i += 1) {
     hash = ((hash << 5) - hash) + routeId.charCodeAt(i);
     hash |= 0;
   }
-  return Math.abs(hash % 12) + 2; // 2-13 minutes
+  return Math.abs(hash % 12) + 2;
 }
 
 export function searchStops(query: string): BusStop[] {
-  if (!query) return busStops;
-  const q = query.toLowerCase();
-  return busStops.filter((s) => s.name.toLowerCase().includes(q));
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return [...busStops].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return busStops
+    .filter((stop) => stop.name.toLowerCase().includes(normalized))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
