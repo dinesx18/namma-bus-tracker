@@ -72,6 +72,12 @@
 .leaflet-container {
   font-family: inherit;
   z-index: 0;
+  background: hsl(var(--muted));
+}
+
+.leaflet-container img,
+.leaflet-container .leaflet-tile {
+  max-width: none !important;
 }
 
 .leaflet-control-zoom {
@@ -84,12 +90,15 @@
   border-radius: 0.5rem !important;
 }
 
-.bus-marker-icon {
+.track-bus-marker,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
   background: none;
   border: none;
 }
 
-.track-bus-marker {
-  background: none;
-  border: none;
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
